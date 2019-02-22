@@ -1,6 +1,7 @@
 """A simple matlotlib-based video viewer. Video can be a list-like object or an
 iterator that yields 2D array."""
-    
+from __future__ import absolute_import, print_function, division 
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
