@@ -152,20 +152,13 @@ def draw_psf(im, points, intensity, sigma):
                 im[i,j] = im[i,j] + p
     return im  
  
-def particles_video(particles, shape = (512,512),t1 = None, t2 = None, 
+def particles_video(particles, shape = (512,512),
                  background = 0, intensity = 10, sigma = None):
     """Creates brownian particles video"""
         
     background = np.zeros(shape = shape,dtype = "uint8") + background
     height, width = shape
-    
-    out1 = None
-    out2 = None
-    
-    if t1 is not None and t2 is not None:
-        t1 = list(t1)
-        t2 = list(t2)
-    
+
     def get_frame(data):
         im = background.copy()
         if sigma is None:
@@ -173,25 +166,9 @@ def particles_video(particles, shape = (512,512),t1 = None, t2 = None,
         else:
             im = draw_psf(im, data, intensity, sigma)
         return im
-    
-    count = 0
-    
-    for i,data in enumerate(particles):
         
-        if t1 is not None and t2 is not None:
-            if i in t1[:1]:
-                t1.pop(0)
-                out1 = get_frame(data)   
-                
-            if i in t2[:1]:
-                out2 = get_frame(data)  
-                t2.pop(0)
-            if out1 is not None and out2 is not None:
-                yield out1, out2
-                count +=1
-                out1, out2 = None, None
-        else:
-            yield get_frame(data)
+    for i,data in enumerate(particles):
+        yield get_frame(data)
 
 def test_plot(n = 5000, particles = 2):
     """Brownian particles usage example. Track 2 particles"""
@@ -227,8 +204,9 @@ def frame_grabber(nframes, shape = (256,256), intensity = 30, sigma = 2, **kw):
     return particles_video(p, shape = shape, sigma = sigma, intensity = intensity) 
 
 if __name__ == "__main__":
-    video = frame_grabber(1024, dt = 0.1)
+    video = frame_grabber(1024, dt = 0.1) #this is an iterator
     import viewer
-    v1 = viewer.VideoViewer(video,1024)
+    video = list(video) #lets read it into memort by creating a list
+    v1 = viewer.VideoViewer(video) 
     v1.show()
     test_plot()
