@@ -22,7 +22,7 @@ def SAT1(fileName, numPoints, dt, kTrap, trapFrequency, trapAmplitude, beadRadiu
     #
     #   Warning: position values in output file are in micrometers!
 
-    #print("Calculating ...")
+    print("Calculating ...")
     fout = open(fileName, "w")
 
     kBT = constants.Boltzmann*300   #   assumption: T=300K
@@ -85,7 +85,7 @@ def SAT2(fileName, numPoints, dt, kxTrap, kyTrap, xTrapFreq, yTrapFreq, xTrapAmp
     if (dt <= dtInternal):
         raise ValueError("dt must be longer than time step of simulation")
 
-    #print("\nCalculating ...")
+    print("\nCalculating ...")
     fout = open(fileName, "w")
 
     kBT = constants.Boltzmann*temp   #   assumption: T=300K

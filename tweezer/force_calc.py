@@ -52,6 +52,6 @@ def force_calculation(time, xPos, yPos, xPosTrap, yPosTrap, ks, temp=293):
         forces[point,1] = ks[1]*(yPos[point]-yPosTrap[point])
 
     means = np.mean(np.fabs(forces), axis=0)*1e6
-    #print("Mean force values in pN:", means)
+    print("Mean force values in pN:", means)
 
     return forces, means
