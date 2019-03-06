@@ -6,6 +6,5 @@ Force calculation example
 
 .. plot:: examples/force_calculation.py
 
-   An example of force calculation
-
+   An example of force calculation.
 

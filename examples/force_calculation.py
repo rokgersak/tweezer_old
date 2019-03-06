@@ -11,3 +11,6 @@ values = forcecalc.read_input("test.dat")
 #   In this case, the calculated values are not recorded.
 
 forcecalc.force_calculation(values[:,0], values[:,1], values[:,2], values[:,3], values[:,4], kValues, 300)
+
+import matplotlib.pyplot as plt
+plt.show()
