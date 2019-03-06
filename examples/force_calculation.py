@@ -12,10 +12,10 @@ values = forcecalc.read_input("test.dat")
 
 times = values[:,0]
 
-#f,m = forcecalc.force_calculation(times, values[:,1], values[:,2], values[:,3], values[:,4], kValues, 300)
+f,m = forcecalc.force_calculation(times, values[:,1], values[:,2], values[:,3], values[:,4], kValues, 300)
 
-import matplotlib.pyplot as plt
-plt.plot([1,2,3])
-plt.show()
+#import matplotlib.pyplot as plt
+#plt.plot([1,2,3])
+#plt.show()
 
-#forcecalc.force_plotting(times,f)
+forcecalc.force_plotting(times,f)
