@@ -95,19 +95,21 @@ def rotate_and_decenter(xdata, ydata, phi, center):
 
 
 def drift(xdata, ydata):
-    """Adds a random quadratic function to the positions."""
+    """Adds a random sine function to the positions."""
     
     np.random.seed(seed=0)
-    x_drift_parameters = np.random.rand(3)*1e-8
-    y_drift_parameters = np.random.rand(3)*1e-8
+    x_drift_parameters = np.random.rand(3)
+    y_drift_parameters = np.random.rand(3)
     
-    def quadratic(x, parameters):
-        return parameters[0] + parameters[1]*x + parameters[2]*x**2
+    def sine(x, parameters):
+        return parameters[0]*np.sin(parameters[1]*x/len(x)*5 + parameters[2])
+    
+    t = np.arange(len(xdata))
 
-    return x + quadratic(t, x_drift_parameters), y + quadratic(t, y_drift_parameters)
+    return xdata + sine(t, x_drift_parameters), ydata + sine(t, y_drift_parameters)
     
 
-def generate(k, temp=273, phi=0., center=(0., 0.), number_of_points=10**4):
+def generate(k, temp=273, phi=0., center=(0., 0.), number_of_points=10**5):
     """Generates positions.
 
     Draws positions with uncorrelated coordinates from
@@ -141,10 +143,11 @@ def generate(k, temp=273, phi=0., center=(0., 0.), number_of_points=10**4):
     """
     xdata, ydata = draw(k, temp, number_of_points)
     xdata, ydata = rotate_and_decenter(xdata, ydata, phi, center)
+    xdata, ydata = drift(xdata, ydata)
     return xdata, ydata
 
 
-def generate_time(number_of_points=10**4, time_interval=1e-3, start_time=0):
+def generate_time(number_of_points=10**5, time_interval=1e-3, start_time=0):
     """Generates time coordinates.
     
     Creates the time coordinates 

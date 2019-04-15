@@ -3,8 +3,8 @@
 import unittest
 
 import numpy as np
-import tweezer.katjasara.calibration as cal
-import tweezer.katjasara.generate as gen
+import tweezer.calibration as cal
+import tweezer.examples.calibration_generate_data as gen
 
 class TestCalibration(unittest.TestCase):
     
@@ -21,6 +21,7 @@ class TestCalibration(unittest.TestCase):
         result = cal.center_and_rotate(
                 x, y
                 )
+        print(result[2])
         self.assertTrue(np.allclose(-result[2], self.expected_result[1], 
                                     atol = 0.1))
         
@@ -29,8 +30,8 @@ class TestCalibration(unittest.TestCase):
                 [self.kx, self.ky], phi = self.phi
                 )
         t = gen.generate_time()
-        x = cal.subtract_moving_average(t, x, 1)
-        y = cal.subtract_moving_average(t, y, 1)
+        x, _, _ = cal.subtract_moving_average(t, x, 1)
+        y, _, _ = cal.subtract_moving_average(t, y, 1)
         self.assertTrue(
                 np.allclose(np.mean(x), 0, atol = 1e-4) and
                 np.allclose(np.mean(y), 0, atol = 1e-4)
