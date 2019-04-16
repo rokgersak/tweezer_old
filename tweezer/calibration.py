@@ -3,9 +3,7 @@ import scipy.constants
 
 import matplotlib.pyplot as plt
 
-
 KB = scipy.constants.Boltzmann
-
 
 def subtract_moving_average(time, data, averaging_time):
     """Subtracts moving average from data.
@@ -38,7 +36,7 @@ def subtract_moving_average(time, data, averaging_time):
     ------
     ValueError
         if dimensions of time and data do not match or
-        if averaging_time is too short or too long.
+        if averaging_time is too short.
 
     Examples
     --------
@@ -52,17 +50,16 @@ def subtract_moving_average(time, data, averaging_time):
     dt = (time[-1] - time[0])/len(time)
     # Half the number of data points to compute moving average from
     n = int(averaging_time/dt/2.)
-    N = 2*n
 
     if n == 0:
         raise ValueError("Too short averaging time.")
     elif n > len(data)/2.:
         raise ValueError("Too long averaging time.")
 
-    moving_average = np.convolve(data, np.ones((N,))/N, mode = 'valid')
+    moving_average = np.convolve(data, np.ones(((int)(2*n),))/(float)(2*n), mode = 'valid')
     new_data = data[n:-n+1] - moving_average
     new_time = time[n:-n+1]
-    
+
     return new_data, moving_average, new_time
 
 
@@ -79,14 +76,12 @@ def center_and_rotate(xdata, ydata):
     xdata : array_like
         x-coordinates
     ydata : array_like
-        y-coordinates
+        y-coordinates   
 
     Returns
     -------
-    new_xdata : ndarray
-        new x-coordinates
-    new_ydata : ndarray
-        new y-coordinates
+    rotated_data : ndarray
+        new x-coordinates and y-coordinates
     phi : float
         angle in anticlockwise direction by which positions were rotated
     var : ndarray
@@ -102,6 +97,9 @@ def center_and_rotate(xdata, ydata):
     TODO
 
     """
+    xdata = np.array(xdata)
+    ydata = np.array(ydata)
+    
     if len(xdata) != len(ydata):
         raise ValueError("Unclear number of points.")
 
@@ -109,29 +107,18 @@ def center_and_rotate(xdata, ydata):
         return data - np.mean(data)
 
     def rotate(xdata, ydata):
-        n = len(xdata)
-
         cov = np.cov(xdata, ydata)
         var, vec = np.linalg.eigh(cov)
         phi = -np.arctan(vec[:, 1][1]/vec[:, 1][0])
-
-        # Rotates one data point
-        def rotate_one(phi, x, y):
-            x_rotated = np.cos(phi)*x - np.sin(phi)*y
-            y_rotated = np.sin(phi)*x + np.cos(phi)*y
-            return x_rotated, y_rotated
-
-        new_xdata, new_ydata = (np.zeros(n), np.zeros(n))
-        for i in range(n):
-            new_xdata[i], new_ydata[i] = rotate_one(
-                phi, xdata[i], ydata[i]
-            )
-        return new_xdata, new_ydata, phi, var[::-1]
+        rotated_data = np.empty((len(xdata), 2))
+        rotated_data[:, 0] = np.cos(phi)*xdata - np.sin(phi)*ydata
+        rotated_data[:, 1] = np.cos(phi)*xdata + np.sin(phi)*ydata
+        return rotated_data, phi, var[::-1]
 
     return rotate(center(xdata), center(ydata))
 
 
-def calibrate(time, xdata, ydata, averaging_time=1., temp=293.):
+def calibrate(time, data, averaging_time=1., temp=293.):
     """Calibrates tweezer.
 
     Subtracts moving average from xdata and ydata,
@@ -142,10 +129,8 @@ def calibrate(time, xdata, ydata, averaging_time=1., temp=293.):
     ----------
     time : array_like
         time coordinates
-    xdata : array_like
-        x-coordinates
-    ydata : array_like
-        y-coordinates
+    data : ndarray_like
+        x-coordinates and y-coordinates
     averaging_time : float
         averaging time interval
     temp : float
@@ -153,8 +138,8 @@ def calibrate(time, xdata, ydata, averaging_time=1., temp=293.):
 
     Returns
     -------
-    k : tuple of floats
-        tweezer coefficients (k_x, k_y)
+    ks : tuple of floats
+        trap stiffnesses in x- and y-directions [N/m]
     phi : float
         angle in anticlockwise direction by which positions were rotated
 
@@ -163,90 +148,15 @@ def calibrate(time, xdata, ydata, averaging_time=1., temp=293.):
     TODO
 
     """
-    x, x_average, _ = subtract_moving_average(time, xdata, averaging_time)
-    y, y_average, time = subtract_moving_average(time, ydata, averaging_time)
+    data = np.array(data)
+    x, x_average = subtract_moving_average(time, data[:, 0], averaging_time)[:2]
+    y, y_average = subtract_moving_average(time, data[:, 1], averaging_time)[:2]
+    trajectory, phi, var = center_and_rotate(x, y)
+    ks = KB*temp/var*1e12
 
-    x, y, phi, var = center_and_rotate(x, y)
-    k = KB*temp/var*1e12
-
-    return  tuple(k), phi, np.array([x_average, y_average])
-
-
-def plot(time, xdata, ydata, averaging_time=1., temp=293.):
-    """
-    TODO (will be part of another module later)
-
-    """
-    x = subtract_moving_average(time, xdata, averaging_time)
-    y = subtract_moving_average(time, ydata, averaging_time)
-    x = x[0]
-    y = y[0]
-    x, y, phi, var = center_and_rotate(x, y)
-    k = KB*temp/var*1e12
-
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    ax1.set_title('Original data')
-    ax1.set_xlabel('x [10^(-6) m]')
-    ax1.set_ylabel('y [10^(-6) m]')
-    ax1.scatter(xdata, ydata, s=4)
-    ax1.set_aspect('equal')
-    ax2.set_title('Centered data, phi = {:.2f} rad'.format(phi,))
-    ax2.set_xlabel('x [10^(-6) m]')
-    ax2.set_ylabel('y [10^(-6) m]')
-    ax2.scatter(x, y, s=4)
-    ax2.set_aspect('equal')
-    fig.tight_layout()
-    plt.show()
-
-    xy = np.zeros((len(x), 2))
-    xy[:, 0] = x
-    xy[:, 1] = y
-
-    fig = plt.figure()
-    titles = ['x', 'y']
-    for i in range(2):
-        ax = fig.add_subplot(1, 2, i+1)
-        ax.set_xlabel('{} [10^(-6) m]'.format(titles[i]))
-        ax.set_ylabel('Bin height')
-        hist, bin_edges = np.histogram(
-            xy[:, i], bins=int(np.sqrt(len(x))), density=True
-        )
-        ax.set_title('k_{} = {:.2e} J/m^2'.format(
-            titles[i], k[i]))
-        bin_centres = (bin_edges[:-1] + bin_edges[1:])/2.
-        ax.scatter(bin_centres, hist, s=4)
-        x_model = np.linspace(min(bin_centres), max(bin_centres), 100)
-        prefactor = 1./np.sqrt(2.*np.pi*var[i])
-        ax.plot(x_model, prefactor*np.exp(-x_model**2./(2.*var[i])))
-    fig.tight_layout()
-    plt.show()
-
-    return None
-
-
-def plot_drift(time, xdata, ydata, averaging_time=1., temp=293.):
-    
-    x, x_average, _ = subtract_moving_average(time, xdata, averaging_time)
-    y, y_average, time = subtract_moving_average(time, ydata, averaging_time)
-    
-    average_positions = [x_average, y_average]
-    positions = [x, y]
-    fig = plt.figure()
-    titles = ['x', 'y']
-    for i in range(2):
-        ax = fig.add_subplot(1, 2, i+1)
-        ax.set_ylabel('{} [10^(-6) m]'.format(titles[i]))
-        ax.set_xlabel('t')
-        ax.scatter(time, positions[i]+average_positions[i], s=4)
-        ax.scatter(time, average_positions[i], s=4)
-    fig.tight_layout()
-    plt.show()
-
-    return None
-
-
-
-def potential(time, xdata, ydata, averaging_time=1., temp=293.):
+    return tuple(ks), phi, np.array([x_average, y_average])
+  
+def potential(time, data, averaging_time=1., temp=293.):
     """Calculates the potential.
 
     Centers and rotates data. Histogramms the data
@@ -257,10 +167,8 @@ def potential(time, xdata, ydata, averaging_time=1., temp=293.):
     ----------
     time : array_like
         time coordinates
-    xdata : array_like
-        x-coordinates
-    ydata : array_like
-        y-coordinates
+    data : ndarray_like
+        x-coordinates and y-coordinates
     averaging_time : float
         averaging time interval
     temp : float
@@ -280,25 +188,17 @@ def potential(time, xdata, ydata, averaging_time=1., temp=293.):
     TODO
 
     """
-    
-    x = subtract_moving_average(time, xdata, averaging_time)
-    y = subtract_moving_average(time, ydata, averaging_time)
-    x = x[0]
-    y = y[0]
-    x, y, phi, var = center_and_rotate(x, y)
-    
-    xy = np.zeros((len(x), 2))
-    xy[:, 0] = x
-    xy[:, 1] = y
+    data = np.array(data)
+    x = subtract_moving_average(time, data[:, 0], averaging_time)[0]
+    y = subtract_moving_average(time, data[:, 1], averaging_time)[0]
+    trajectory, phi, var = center_and_rotate(x, y)
     
     positions = [0, 0]
     potential_values = [0, 0]
     
     for i in range(2):
-       hist, bin_edges = np.histogram(
-            xy[:, i], bins=int(np.sqrt(len(x))), density=False
-        )
-       hist = hist/float(len(x))
+       hist, bin_edges = np.histogram(trajectory[:, i], bins=int(np.sqrt(len(x))), density=False)
+       hist = hist/(float)(len(x))
        bin_centres = (bin_edges[:-1] + bin_edges[1:])/2.
        ok_index = hist > 0
        hist, bin_centres = hist[ok_index], bin_centres[ok_index]
@@ -306,27 +206,3 @@ def potential(time, xdata, ydata, averaging_time=1., temp=293.):
        potential_values[i] = -np.log(hist)
 
     return positions, potential_values, phi
-
-           
-def plot_potential(time, xdata, ydata, averaging_time=1., temp=293.):
-    """
-    TODO (will be part of another module later)
-
-    """
-    positions, potential_values, _ = potential(
-            time, xdata, ydata, 
-            averaging_time= averaging_time, temp=temp)
-
-    fig = plt.figure()
-    titles = ['x', 'y']
-    for i in range(2):
-        ax = fig.add_subplot(1, 2, i+1)
-        ax.set_xlabel('{} [10^(-6) m]'.format(titles[i]))
-        ax.set_ylabel('Potential [kT]')
-        ax.scatter(positions[i], potential_values[i], s=4)
-
-    fig.tight_layout()
-    plt.show()
-
-    return None
-    
