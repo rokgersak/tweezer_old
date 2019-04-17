@@ -51,8 +51,8 @@ def trajectory_plot(time, data, averaging_time=1.):
     TODO
 
     """
-    data=np.array(data)
-    x, x_average = cal.subtract_moving_average(time, data[:, 0], averaging_time)[:2]
+    data = np.array(data)
+    x, x_average, _ = cal.subtract_moving_average(time, data[:, 0], averaging_time)
     y, y_average, time = cal.subtract_moving_average(time, data[:, 1], averaging_time)
     
     trajectory = np.stack((x, y), axis=1)
@@ -77,7 +77,7 @@ def calibration_plots(time, data, averaging_time=1., temp=293.):
     TODO (Taken from the calibration.py)
 
     """
-    data=np.array(data)
+    data = np.array(data)
     x = cal.subtract_moving_average(time, data[:, 0], averaging_time)[0]
     y = cal.subtract_moving_average(time, data[:, 1], averaging_time)[0]
     trajectory, phi, var = cal.center_and_rotate(x, y)
@@ -108,7 +108,7 @@ def calibration_plots(time, data, averaging_time=1., temp=293.):
             ax = fig.add_subplot(1, 2, i+1)
             ax.set_xlabel(('Position {} ' + r'[$\mu m$]').format(titles[i]))
             ax.set_ylabel('Bin height')
-            hist, bin_edges = np.histogram(trajectory[:, i], bins=int(np.sqrt(len(trajectory[:, 0]))), density=True)
+            hist, bin_edges = np.histogram(trajectory[:, i], bins=int(np.sqrt(len(trajectory[:, i]))), density=True)
             ax.set_title('k_{} = {:.2e}J/m^2'.format(titles[i], k[i]))
             bin_centres = (bin_edges[:-1] + bin_edges[1:])/2.
             ax.scatter(bin_centres, hist, s=4)

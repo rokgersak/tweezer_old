@@ -112,7 +112,7 @@ def center_and_rotate(xdata, ydata):
         phi = -np.arctan(vec[:, 1][1]/vec[:, 1][0])
         rotated_data = np.empty((len(xdata), 2))
         rotated_data[:, 0] = np.cos(phi)*xdata - np.sin(phi)*ydata
-        rotated_data[:, 1] = np.cos(phi)*xdata + np.sin(phi)*ydata
+        rotated_data[:, 1] = np.cos(phi)*ydata + np.sin(phi)*xdata
         return rotated_data, phi, var[::-1]
 
     return rotate(center(xdata), center(ydata))
@@ -142,6 +142,8 @@ def calibrate(time, data, averaging_time=1., temp=293.):
         trap stiffnesses in x- and y-directions [N/m]
     phi : float
         angle in anticlockwise direction by which positions were rotated
+    data : ndarray_like
+        x-coordinates and y-coordinates of averaged data
 
     Examples
     --------
@@ -178,7 +180,7 @@ def potential(time, data, averaging_time=1., temp=293.):
     -------
     positions: list of two arrays
         x- and y-coordinates
-    potential_values: list of thwo arrays
+    potential_values: list of two arrays
         values of the potential coresponding to the postitions
     phi: float
         angle in anticlockwise direction by which positions were rotated
