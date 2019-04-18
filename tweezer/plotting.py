@@ -41,7 +41,7 @@ def read_file(path, no_of_particles):
     for i in range(rows-1, 0, -1):
         check_row = np.isnan(data[i, 14:])
         # Delete row, if it contains nan
-        if(np.sum(check_row) == True):
+        if(np.sum(check_row) > 0):
             data = np.delete(data, i, 0)
     print('Shape of cropped data: ', data.shape)
     return data[:, 0], data[:, 2:14], data[:, 14:columns]
@@ -62,9 +62,10 @@ def trajectory_plot(time, data, averaging_time=1.):
     titles = ['x', 'y']
     for i in range(2):
         ax = fig.add_subplot(1, 2, i+1)
+        ax.set_title('Trajectory of a trapped particle in {} direction'.format(titles[i]))
         ax.grid(True)
         ax.set_xlabel('Time [s]')
-        ax.set_ylabel('Position {} '.format(titles[i]) + r'[$\mu m$]')
+        ax.set_ylabel('Direction {} '.format(titles[i]) + r'[$\mu m$]')
         ax.scatter(time, trajectory[:, i] + trajectory_averaged[:, i], s=4, label = r'original')
         ax.scatter(time, trajectory_averaged[:, i], s=4, label = r'averaged')
         ax.legend(loc = 'best')
@@ -87,14 +88,14 @@ def calibration_plots(time, data, averaging_time=1., temp=293.):
         fig, (ax1, ax2) = plt.subplots(1, 2)
         ax1.set_title('Original data')
         ax1.grid(True)
-        ax1.set_xlabel('Position x ' + r'[$\mu m$]')
-        ax1.set_ylabel('Position y ' + r'[$\mu m$]')
+        ax1.set_xlabel('Direction x ' + r'[$\mu m$]')
+        ax1.set_ylabel('Direction y ' + r'[$\mu m$]')
         ax1.scatter(data[:, 0], data[:, 1], s=4)
         ax1.set_aspect('equal')
         ax2.set_title('Centered data, phi = {:.2f} rad'.format(phi,))
         ax2.grid(True)
-        ax2.set_xlabel('Position x ' + r'[$\mu m$]')
-        ax2.set_ylabel('Position y ' + r'[$\mu m$]')
+        ax2.set_xlabel('Direction x ' + r'[$\mu m$]')
+        ax2.set_ylabel('Direction y ' + r'[$\mu m$]')
         ax2.scatter(trajectory[:, 0], trajectory[:, 1], s=4)
         ax2.set_aspect('equal')
         fig.tight_layout()
@@ -106,7 +107,7 @@ def calibration_plots(time, data, averaging_time=1., temp=293.):
         titles = ['x', 'y']
         for i in range(2):
             ax = fig.add_subplot(1, 2, i+1)
-            ax.set_xlabel(('Position {} ' + r'[$\mu m$]').format(titles[i]))
+            ax.set_xlabel(('Direction {} ' + r'[$\mu m$]').format(titles[i]))
             ax.set_ylabel('Bin height')
             hist, bin_edges = np.histogram(trajectory[:, i], bins=int(np.sqrt(len(trajectory[:, i]))), density=True)
             ax.set_title('k_{} = {:.2e}J/m^2'.format(titles[i], k[i]))
@@ -135,7 +136,8 @@ def potential_plot(time, data, averaging_time=1., temp=293.):
     titles = ['x', 'y']
     for i in range(2):
         ax = fig.add_subplot(1, 2, i+1)
-        ax.set_xlabel(('Position {} ' + r'[$\mu m$]').format(titles[i]))
+        ax.set_title('Shape of a potential in {} direction'.format(titles[i]))
+        ax.set_xlabel(('Direction {} ' + r'[$\mu m$]').format(titles[i]))
         ax.set_ylabel('Potential [kT]')
         ax.scatter(positions[i], potential_values[i], s=4)
     fig.tight_layout()
@@ -155,16 +157,15 @@ def force_plot(time, forces):
         two-column array of forces on trapped bead in x- and y-directions
     """        
     fig = plt.figure()
-    for i in range(1):
-        ax = fig.add_subplot(1, 1, i+1)
-        ax.set_title('Radial gradient forces on trapped particle')
-        ax.set_xlabel('Time [s]')
-        ax.set_ylabel('F [pN]')
-        ax.plot(time, forces[:, 0]*1e6, label = r'$F_x$')
-        ax.plot(time, forces[:, 1]*1e6, label = r'$F_y$')
-        ax.plot(time, np.sqrt(forces[:, 0]**2 + forces[:, 1]**2)*1e6, label = r'$F_{sum}$')
-        ax.grid(True)
-        ax.legend(loc = 'best')
+    ax = fig.add_subplot(1, 1, 1)
+    ax.set_title('Radial gradient forces on trapped particle')
+    ax.set_xlabel('Time [s]')
+    ax.set_ylabel('F [pN]')
+    ax.plot(time, forces[:, 0]*1e6, label = r'$F_x$')
+    ax.plot(time, forces[:, 1]*1e6, label = r'$F_y$')
+    ax.plot(time, np.sqrt(forces[:, 0]**2 + forces[:, 1]**2)*1e6, label = r'$F_{sum}$')
+    ax.grid(True)
+    ax.legend(loc = 'best')
     fig.tight_layout()
     plt.show()
     return None
