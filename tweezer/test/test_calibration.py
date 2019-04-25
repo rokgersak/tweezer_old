@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 import tweezer.calibration as cal
-import tweezer.examples.calibration_generate_data as gen
+import examples.calibration_generate_data as gen
 
 class TestCalibration(unittest.TestCase):
     
